@@ -48,7 +48,7 @@ console.log("modulus:", modulus);
 const buffer = Buffer.from('hello', 'utf-8');
 console.log("buffer:", buffer.toString('hex'));
 
-// sign
+// sign - rsa-sha256 internally
 const signature = key.sign(buffer, 'buffer', 'buffer');
 console.log("signature:", signature.toString('hex'));
 
