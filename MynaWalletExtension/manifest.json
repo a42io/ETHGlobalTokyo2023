@@ -1,0 +1,23 @@
+{
+    "manifest_version": 3,
+    "name": "MynaWallet",
+    "description": "MynaWallet Extension",
+    "version": "1.0",
+    "action": {
+      "default_popup": "popup.html",
+      "default_icon": "hello_extensions.png"
+    },
+    "content_scripts": [
+        {
+            "matches": ["http://*/*", "https://*/*"],
+            "js": ["inject.js"],
+            "all_frames": true
+        }
+    ],
+    "web_accessible_resources": [
+        {
+            "resources": ["content.js"],
+            "matches": ["http://*/*", "https://*/*"]
+          }
+    ]
+}
