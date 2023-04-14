@@ -6,5 +6,18 @@
     "action": {
       "default_popup": "hello.html",
       "default_icon": "hello_extensions.png"
-    }
-  }
+    },
+    "content_scripts": [
+        {
+            "matches": ["http://*/*", "https://*/*"],
+            "js": ["inject.js"],
+            "all_frames": true
+        }
+    ],
+    "web_accessible_resources": [
+        {
+            "resources": ["content.js"],
+            "matches": ["http://*/*", "https://*/*"]
+          }
+    ]
+}
