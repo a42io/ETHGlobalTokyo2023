@@ -11,6 +11,7 @@ private const val TAG = "Main"
 class MainActivity : AppCompatActivity(), NfcAdapter.ReaderCallback {
 
     private lateinit var nfcAdapter: NfcAdapter
+    var reader: Reader? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,5 +32,17 @@ class MainActivity : AppCompatActivity(), NfcAdapter.ReaderCallback {
     override fun onTagDiscovered(tag: Tag?) {
         if (tag == null) return
         Log.d(TAG, "onTagDiscovered")
+        reader = Reader(tag)
+        reader?.connect()
+        readModulus()
+    }
+
+    fun readModulus() {
+        val jpkiAP = reader?.selectJpkiAp()
+        val cert = jpkiAP?.readAuthCertificate()
+        val bytes = cert?.publicKey?.encoded!!
+        val modulus = bytes.copyOfRange(33, (256+33))
+        val modulusStr = "0x${modulus.toHexString().lowercase()}"
+        Log.d(TAG, "modulus: $modulusStr")
     }
 }
