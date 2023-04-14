@@ -41,8 +41,11 @@ class MainActivity : AppCompatActivity(), NfcAdapter.ReaderCallback {
         Log.d(TAG, "onTagDiscovered")
         reader = Reader(tag)
         reader?.connect()
-//        readModulus()
-        sign()
+
+        readModulus()
+
+        val messageHashString = "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
+        sign(messageHashString.hexToByteArray())
     }
 
     fun readModulus() {
@@ -54,25 +57,28 @@ class MainActivity : AppCompatActivity(), NfcAdapter.ReaderCallback {
         Log.d(TAG, "modulus: $modulusStr")
     }
 
-    fun sign() {
-        val pin = editTextPIN.text
+    fun sign(messageHash: ByteArray) {
+        val pin = editTextPIN.text.toString()
 
         if (pin.length != 4) return
 
         val jpkiAP = reader?.selectJpkiAp()
 
-        val count = jpkiAP?.lookupAuthPin()
-        Log.d(TAG, "PIN COUNT: ${count}")
+        val count = jpkiAP?.lookupAuthPin()!!
+        Log.d(TAG, "PIN COUNT: $count")
 
         if (count < 3) return
 
-        // PIN2 の検証
         if(jpkiAP?.verifyAuthPin(pin) != true) {
             Log.d(TAG, "Invalid PIN")
             return
         }
 
+        val header = "3031300d060960864801650304020105000420".hexToByteArray()
+        val digestInfo = header + messageHash
 
-
+        val signature = jpkiAP?.authSignature(digestInfo)
+        val signatureStr = "0x${signature?.toHexString()?.lowercase()}"
+        Log.d(TAG, "signature: $signatureStr")
     }
 }
