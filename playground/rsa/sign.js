@@ -44,8 +44,11 @@ const components = key.exportKey('components');
 const modulus = components.n.toString('hex').replace('00', '');
 console.log("modulus:", modulus);
 
-// sign
+// data to sign
 const buffer = Buffer.from('hello', 'utf-8');
+console.log("buffer:", buffer.toString('hex'));
+
+// sign
 const signature = key.sign(buffer, 'buffer', 'buffer');
 console.log("signature:", signature.toString('hex'));
 
