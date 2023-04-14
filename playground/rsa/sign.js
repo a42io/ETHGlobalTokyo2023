@@ -1,5 +1,4 @@
 const NodeRSA = require('node-rsa');
-const crypto = require('crypto');
 
 // Generate Key
 const key = new NodeRSA(`-----BEGIN RSA PRIVATE KEY-----
@@ -45,14 +44,8 @@ console.log("modulus:", modulus);
 
 // sign
 const buffer = Buffer.from('hello', 'utf-8');
-const digest = crypto.createHash('sha256').update(buffer).digest();
-console.log("digest:", digest.toString('hex'));
-const header = Buffer.from('3031300d060960864801650304020105000420', 'hex');
-const digestWithHeader = Buffer.concat([header, digest])
-console.log("digestWithHeader:", digestWithHeader.toString('hex'));
-const signature = key.sign(digestWithHeader, 'buffer', 'buffer');
+const signature = key.sign(buffer, 'buffer', 'buffer');
 console.log("signature:", signature.toString('hex'));
-
 
 // verify signature
 const result = key.verify(buffer, signature, 'buffer', 'buffer');
