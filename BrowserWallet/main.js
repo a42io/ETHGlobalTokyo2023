@@ -43,14 +43,26 @@ async function loadMynaWallet() {
 	requestModulusMode();
 }
 
+// call from button
 async function signTest() {
 	const messageToSign = toArrayBuffer("68656c6c6f");	// hello
 	await mynaSigner.characteristic.writeValueWithResponse(messageToSign);
 	requestSignatureMode();
 }
 
+// call from button
+async function reload() {
+	showNotification("Reloaded!");
+}
+
+function showNotification(messsage) {
+	$("#notification-body").text(messsage)
+	$("#notification").toast("show")
+}
+
 function onMynaSignerConnect() {
-	console.log("connected to mynaSigner");
+	console.log("connected to Myna Signer");
+	showNotification("Connected to MynaSigner");
 }
 
 async function requestModulusMode() {
@@ -68,5 +80,9 @@ function onCharacteristicValueChanged (event) {
 }
 
 $(window).on('load', async () => {
-
+	var toastElList = [].slice.call(document.querySelectorAll(".toast"));
+	var toastList = toastElList.map(function (toastEl) {
+  		return new bootstrap.Toast(toastEl, null);
+	});
+	console.log(toastList)
 })
