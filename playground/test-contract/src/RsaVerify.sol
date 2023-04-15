@@ -25,7 +25,11 @@ library RsaVerify {
         }
     }
 
-    function join(bytes memory _s, bytes memory _e, bytes memory _m) internal pure returns (bytes memory) {
+    function join(
+        bytes memory _s,
+        bytes memory _e,
+        bytes memory _m
+    ) internal pure returns (bytes memory) {
         uint256 slen = _s.length;
         uint256 elen = _e.length;
         uint256 mlen = _m.length;
@@ -52,7 +56,10 @@ library RsaVerify {
         return input;
     }
 
-    function sliceUint(bytes memory bs, uint256 start) internal pure returns (uint256) {
+    function sliceUint(
+        bytes memory bs,
+        uint256 start
+    ) internal pure returns (uint256) {
         require(bs.length >= start + 32, "slicing out of range");
         uint256 x;
         assembly {
@@ -69,11 +76,12 @@ library RsaVerify {
      * @param _m is the modulus
      * @return 0 if success, >0 otherwise
      */
-    function pkcs1Sha256Verify(bytes32 _sha256, bytes memory _s, bytes memory _e, bytes memory _m)
-        internal
-        view
-        returns (uint256)
-    {
+    function pkcs1Sha256Verify(
+        bytes32 _sha256,
+        bytes memory _s,
+        bytes memory _e,
+        bytes memory _m
+    ) internal view returns (uint256) {
         uint256 decipherlen = _m.length;
         require(decipherlen >= 62); // _m.length >= sha256Prefix.length + _sha256.length + 11 = 19 + 32 + 11 = 62
         // decipher
@@ -86,7 +94,16 @@ library RsaVerify {
         // cp0;
 
         assembly {
-            pop(staticcall(sub(gas(), 2000), 0x05, add(input, 0x20), inputlen, add(decipher, 0x20), decipherlen))
+            pop(
+                staticcall(
+                    420000,
+                    0x05,
+                    add(input, 0x20),
+                    inputlen,
+                    add(decipher, 0x20),
+                    decipherlen
+                )
+            )
         }
 
         // optimized for 1024 bytes
@@ -110,9 +127,9 @@ library RsaVerify {
         // or uncomment for other than 1024 (end)
 
         if (
-            uint256(bytes32(sha256Prefix))
-                != sliceUint(decipher, decipherlen - 51)
-                    & 0xffffffffffffffffffffffffffffffffffffff00000000000000000000000000
+            uint256(bytes32(sha256Prefix)) !=
+            sliceUint(decipher, decipherlen - 51) &
+                0xffffffffffffffffffffffffffffffffffffff00000000000000000000000000
         ) {
             return 4;
         }
@@ -131,11 +148,12 @@ library RsaVerify {
      * @param _m is the modulus
      * @return 0 if success, >0 otherwise
      */
-    function pkcs1Sha256VerifyRaw(bytes memory _data, bytes memory _s, bytes memory _e, bytes memory _m)
-        internal
-        view
-        returns (uint256)
-    {
+    function pkcs1Sha256VerifyRaw(
+        bytes memory _data,
+        bytes memory _s,
+        bytes memory _e,
+        bytes memory _m
+    ) internal view returns (uint256) {
         return pkcs1Sha256Verify(sha256(_data), _s, _e, _m);
     }
 }

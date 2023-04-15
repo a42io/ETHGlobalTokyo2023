@@ -12,7 +12,7 @@ contract DeployScript is Script {
     function run() public {
         vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
         SimpleAccountFactory factory = new SimpleAccountFactory(
-            IEntryPoint(0x0576a174D229E3cFA37253523E645A78A0C91B57)
+            IEntryPoint(0x0F46c65C17AA6b4102046935F33301f0510B163A)
         );
         vm.stopBroadcast();
     }
