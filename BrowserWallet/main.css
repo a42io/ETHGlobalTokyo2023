@@ -16,5 +16,5 @@ body {
 }
 
 .only-wallet-loaded {
-    display: none;
+    /* display: none; */
 }
