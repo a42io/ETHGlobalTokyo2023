@@ -10,14 +10,9 @@
     "content_scripts": [
         {
             "matches": ["http://*/*", "https://*/*"],
-            "js": ["inject.js"],
-            "all_frames": true
+            "js": ["content.js"],
+            "all_frames": true,
+            "world": "MAIN"
         }
-    ],
-    "web_accessible_resources": [
-        {
-            "resources": ["content.js"],
-            "matches": ["http://*/*", "https://*/*"]
-          }
     ]
 }
