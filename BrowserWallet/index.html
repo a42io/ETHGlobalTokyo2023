@@ -1,20 +1,28 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="bootstrap.min.css" rel="stylesheet">
         <title>Myna Browser Wallet</title>
         <script src="jquery-3.6.4.min.js"></script>
+        <script src="bootstrap.bundle.min.js"></script>
         <script src="ethers-5.2.umd.min.js"></script>
         <script src="main.js"></script>
     </head>
     <body>
-        <div>
-            <button onclick="connectMynaSigner()">Connect Myna Signer (NFC Card Reader)</button>
-        </div>
-        <div>
-            <button onclick="loadMynaWallet()">Load Myna Wallet</button>
-        </div>
-        <div>
-            <button onclick="signTest()">SignTest</button>
+        <div class="container-fluid">
+            <h1>Myna Browser Wallet</h1>
+            <p>Web3 wallet works with Japanese government issued ID card.</p>
+            <div>
+                <button onclick="connectMynaSigner()">Connect Myna Signer (NFC Card Reader)</button>
+            </div>
+            <div>
+                <button onclick="loadMynaWallet()">Load Myna Wallet</button>
+            </div>
+            <div>
+                <button onclick="signTest()">SignTest</button>
+            </div>
         </div>
     </body>
 </html>
