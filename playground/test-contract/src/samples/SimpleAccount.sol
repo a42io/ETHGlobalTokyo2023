@@ -23,6 +23,10 @@ contract SimpleAccount is BaseAccount, UUPSUpgradeable, Initializable {
     using ECDSA for bytes32;
     using RsaVerify for bytes32;
 
+    //filler member, to push the nonce and owner to the same slot
+    // the "Initializeble" class takes 2 bytes in the first slot
+    bytes28 private _filler;
+
     //explicit sizes of nonce, to fit a single storage cell with "owner"
     uint96 private _nonce;
     address public owner;
@@ -36,14 +40,6 @@ contract SimpleAccount is BaseAccount, UUPSUpgradeable, Initializable {
         hex"40d846e8b932435d163105b9e35938bfc6c7a2d61b9b657bec671b62e87041edb158b110bd85d1f62dc2c54c0d55b7227bcbd8c8af74e6050634f057ef1def2f29b83909b52279c3ad5bde960177aef2b81f2cfbe45a696f79822cb26d41f3df24f0524d71b88c778793075853d4fe6d3061993cc60fa0932a965261bfb805b9a5d1c6c2aca8f23c7b617073f41b0f35097f1e24a7e092a044366f9e7c8ac9df1ef41286b893e7fc2514a2c98ddddf70e2d2f9b219f4c513ee8b8348691f209d12fc6202ad9c20e7b5ef2d875c155f0ffc1310aaba04b27457346c173a1be4708b35c32fa99f4571f0317b7db82414e89a0d0a139f561611a435475676299e44";
     bytes internal constant testData = hex"68656c6c6f";
 
-    function nonce() public view virtual override returns (uint256) {
-        return _nonce;
-    }
-
-    function entryPoint() public view virtual override returns (IEntryPoint) {
-        return _entryPoint;
-    }
-
     IEntryPoint private immutable _entryPoint;
 
     event SimpleAccountInitialized(
@@ -51,20 +47,31 @@ contract SimpleAccount is BaseAccount, UUPSUpgradeable, Initializable {
         address indexed owner
     );
 
-    // solhint-disable-next-line no-empty-blocks
-    receive() external payable {}
-
-    constructor(IEntryPoint anEntryPoint) {
-        _entryPoint = anEntryPoint;
-    }
-
     modifier onlyOwner() {
         _onlyOwner();
         _;
     }
 
+    /// @inheritdoc BaseAccount
+    function nonce() public view virtual override returns (uint256) {
+        return _nonce;
+    }
+
+    /// @inheritdoc BaseAccount
+    function entryPoint() public view virtual override returns (IEntryPoint) {
+        return _entryPoint;
+    }
+
+    // solhint-disable-next-line no-empty-blocks
+    receive() external payable {}
+
+    constructor(IEntryPoint anEntryPoint) {
+        _entryPoint = anEntryPoint;
+        _disableInitializers();
+    }
+
     function _onlyOwner() internal view {
-        //directly from EOA owner, or through the entryPoint (which gets redirected through execFromEntryPoint)
+        //directly from EOA owner, or through the account itself (which gets redirected through execute())
         require(
             msg.sender == owner || msg.sender == address(this),
             "only owner"
@@ -72,7 +79,7 @@ contract SimpleAccount is BaseAccount, UUPSUpgradeable, Initializable {
     }
 
     /**
-     * execute a transaction (called directly from owner, not by entryPoint)
+     * execute a transaction (called directly from owner, or by entryPoint)
      */
     function execute(
         address dest,
@@ -84,7 +91,7 @@ contract SimpleAccount is BaseAccount, UUPSUpgradeable, Initializable {
     }
 
     /**
-     * execute a sequence of transaction
+     * execute a sequence of transactions
      */
     function executeBatch(
         address[] calldata dest,
@@ -98,9 +105,9 @@ contract SimpleAccount is BaseAccount, UUPSUpgradeable, Initializable {
     }
 
     /**
-     * change entry-point:
-     * an account must have a method for replacing the entryPoint, in case the the entryPoint is
-     * upgraded to a newer version.
+     * @dev The _entryPoint member is immutable, to reduce gas consumption.  To upgrade EntryPoint,
+     * a new implementation of SimpleAccount must be deployed with the new EntryPoint address, then upgrading
+     * the implementation by calling `upgradeTo()`
      */
     function initialize(address anOwner) public virtual initializer {
         _initialize(anOwner);
@@ -111,14 +118,7 @@ contract SimpleAccount is BaseAccount, UUPSUpgradeable, Initializable {
         emit SimpleAccountInitialized(_entryPoint, owner);
     }
 
-    /**
-     * validate the userOp is correct.
-     * revert if it doesn't.
-     * - must only be called from the entryPoint.
-     * - make sure the signature is of our supported signer.
-     * - validate current nonce matches request nonce, and increment it.
-     * - pay prefund, in case current deposit is not enough
-     */
+    // Require the function call went through EntryPoint or owner
     function _requireFromEntryPointOrOwner() internal view {
         require(
             msg.sender == address(entryPoint()) || msg.sender == owner,
@@ -136,9 +136,8 @@ contract SimpleAccount is BaseAccount, UUPSUpgradeable, Initializable {
     /// implement template method of BaseAccount
     function _validateSignature(
         UserOperation calldata userOp,
-        bytes32 userOpHash,
-        address
-    ) internal virtual override returns (uint256 sigTimeRange) {
+        bytes32 userOpHash
+    ) internal virtual override returns (uint256 validationData) {
         bytes32 hash = sha256(abi.encode(testData));
         _verifySha256(hash, testSig, exponent, modulus);
         return 0;
@@ -164,8 +163,7 @@ contract SimpleAccount is BaseAccount, UUPSUpgradeable, Initializable {
      * deposit more funds for this account in the entryPoint
      */
     function addDeposit() public payable {
-        (bool req, ) = address(entryPoint()).call{value: msg.value}("");
-        require(req);
+        entryPoint().depositTo{value: msg.value}(address(this));
     }
 
     /**
