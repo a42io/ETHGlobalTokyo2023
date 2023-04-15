@@ -61,14 +61,27 @@ async function loadMynaWallet() {
 
 // call from button
 async function transfer() {
+
+	const to = $('#to').val()
+	const amount = $('#amount').val()
+
+	console.log(to);
+	console.log(amount);
+
+	if (!to || !amount) {
+		return
+	}
+
 	const messageToSign = toArrayBuffer("68656c6c6f");	// hello
 	await mynaSigner.characteristic.writeValueWithResponse(messageToSign);
 	requestSignatureMode();
+	showModal("Transfer from Myna Wallet", "Enter PIN and tap Myna Card to transfer from Myna Wallet!");
 }
 
 // call from button
 async function reload() {
 	showNotification("Reloaded!");
+	updateBalance();
 }
 
 // call from button
@@ -135,12 +148,31 @@ function onCharacteristicValueChanged (event) {
 		if (mynaSigner.mode == 1) {
 			// modulus
 			localStorage.setItem(LOCAL_STORAGE_KEY_MODULUS, toHexString(value));
+			loadAddress()
 		} else if (mynaSigner.mode == 2) {
 			// signature
 
 		}
 		mynaSigner.mode == 0;
 	}
+}
+
+function updateAddress(address) {
+	$('#address').text(address);
+}
+
+function updateBalance() {
+	$('#balance').text();
+}
+
+async function loadAddress() {
+	const address = localStorage.getItem(LOCAL_STORAGE_KEY_ADDRESS)
+	if (address) {
+		updateAddress(address)
+	} else {
+
+	}
+
 }
 
 $(window).on('load', async () => {
@@ -151,4 +183,7 @@ $(window).on('load', async () => {
 
 	const modulus = localStorage.getItem(LOCAL_STORAGE_KEY_MODULUS)
 	console.log(modulus)
+	if (modulus) {
+		loadAddress()
+	}
 })
