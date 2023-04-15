@@ -41,10 +41,10 @@ class MainActivity : AppCompatActivity(), NfcAdapter.ReaderCallback {
     enum class ReaderMode(val rawValue: Int) {
         MODULUS(1),
         SIGNATURE(2),
-        DEFAULT(-1)
+        NONE(-1)
     }
 
-    var mode:ReaderMode? = ReaderMode.DEFAULT
+    var mode:ReaderMode? = ReaderMode.NONE
 
     // BLE
     lateinit var btManager: BluetoothManager
@@ -194,6 +194,7 @@ class MainActivity : AppCompatActivity(), NfcAdapter.ReaderCallback {
         Log.d(TAG, "modulus: $modulusStr")
         if (modulus != null) {
             btGattServer.notifyCharacteristicChanged(btCentralDevice, btGattCharacteristic, false, modulus)
+            mode = ReaderMode.NONE
         }
     }
 
@@ -229,6 +230,7 @@ class MainActivity : AppCompatActivity(), NfcAdapter.ReaderCallback {
         Log.d(TAG, "signature: $signatureStr")
         if (signature != null) {
             btGattServer.notifyCharacteristicChanged(btCentralDevice, btGattCharacteristic, false, signature)
+            mode = ReaderMode.NONE
         }
     }
 

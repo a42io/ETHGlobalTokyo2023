@@ -8,7 +8,7 @@
         <title>Myna Browser Wallet</title>
         <script src="jquery-3.6.4.min.js"></script>
         <script src="bootstrap.bundle.min.js"></script>
-        <script src="ethers-5.2.umd.min.js"></script>
+        <script src="ethers-5.7.umd.min.js"></script>
         <script src="main.js"></script>
     </head>
     <body>
@@ -18,10 +18,14 @@
                     <h1>Myna Browser Wallet</h1>
                     <h5>Web3 wallet works with Japanese government issued ID card.</h5>
                     <div class="mt-3 d-grid gap-2">
-                        <button type="button" class="btn btn-outline-primary" onclick="connectMynaSigner()">Connect Myna Signer (NFC Card Reader)</button>
+                        <button type="button" class="btn btn-outline-primary" onclick="connectMynaSigner()">
+                            Connect Myna Signer (NFC Card Reader)
+                        </button>
                     </div>
                     <div class="mt-3 d-grid gap-2">
-                        <button type="button" class="btn btn-outline-primary" onclick="loadMynaWallet()">Load Myna Wallet</button>
+                        <button type="button" class="btn btn-outline-primary only-myna-signer-connected" onclick="loadMynaWallet()">
+                            Load Myna Wallet
+                        </button>
                     </div>
                     <div class="only-wallet-loaded">
                         <div class="card mt-3">
@@ -52,6 +56,22 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Modal -->
+            <div id="myna-modal" class="modal" tabindex="-1">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 id="myna-modal-title" class="modal-title"></h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <img src="cover.png" width="100%">
+                        <p id="myna-modal-body"></p>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
             <!-- Toast -->
             <div class="position-fixed top-0 end-0 p-3" style="z-index: 5">
