@@ -75,7 +75,7 @@ contract SimpleAccount is BaseAccount, UUPSUpgradeable, Initializable {
         uint256 value,
         bytes calldata func
     ) external {
-        _requireFromEntryPointOrOwner();
+        _requireFromEntryPoint();
         _call(dest, value, func);
     }
 
@@ -86,7 +86,7 @@ contract SimpleAccount is BaseAccount, UUPSUpgradeable, Initializable {
         address[] calldata dest,
         bytes[] calldata func
     ) external {
-        _requireFromEntryPointOrOwner();
+        _requireFromEntryPoint();
         require(dest.length == func.length, "wrong array lengths");
         for (uint256 i = 0; i < dest.length; i++) {
             _call(dest[i], 0, func[i]);
@@ -105,11 +105,6 @@ contract SimpleAccount is BaseAccount, UUPSUpgradeable, Initializable {
     function _initialize(bytes memory anModulus) internal virtual {
         modulus = anModulus;
         emit SimpleAccountInitialized(_entryPoint, anModulus);
-    }
-
-    // Require the function call went through EntryPoint or owner
-    function _requireFromEntryPointOrOwner() internal view {
-        require(msg.sender == address(entryPoint()), "account: not EntryPoint");
     }
 
     /// implement template method of BaseAccount
