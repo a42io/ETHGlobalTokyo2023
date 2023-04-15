@@ -42,5 +42,3 @@ class Ethereum {
 }
 
 const ethereum = new Ethereum();
-
-
