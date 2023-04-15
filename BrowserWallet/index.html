@@ -11,17 +11,35 @@
         <script src="main.js"></script>
     </head>
     <body>
-        <div class="container-fluid">
+        <div class="container-md">
             <h1>Myna Browser Wallet</h1>
             <p>Web3 wallet works with Japanese government issued ID card.</p>
-            <div>
-                <button onclick="connectMynaSigner()">Connect Myna Signer (NFC Card Reader)</button>
+            <div class="mt-3">
+                <button type="button" class="btn btn-primary" onclick="connectMynaSigner()">Connect Myna Signer (NFC Card Reader)</button>
+            </div>
+            <div class="mt-3">
+                <button type="button" class="btn btn-primary" onclick="loadMynaWallet()">Load Myna Wallet</button>
+            </div>
+            <div class="mt-3">
+                <button type="button" class="btn btn-primary" onclick="signTest()">SignTest</button>
             </div>
             <div>
-                <button onclick="loadMynaWallet()">Load Myna Wallet</button>
-            </div>
-            <div>
-                <button onclick="signTest()">SignTest</button>
+                <div id="balance" class="mt-3">BALANCE_PLACEHOLDER</div>
+                <div id="address" class="mt-3">ADDRESS_PLACEHOLDER</div>
+                <div class="mt-3">
+                    <label class="form-label">To</label>
+                    <input type="text" class="form-control" id="to" placeholder="0x...">
+                </div>
+                <div class="mt-3">
+                    <label class="form-label">Amount</label>
+                    <input type="number" class="form-control" id="amount" step="0.01">
+                </div>
+                <div class="mt-3">
+                    <button type="button" class="btn btn-primary" onclick="transfer()">Transfer</button>
+                </div>
+                <div class="mt-3">
+                    <button type="button" class="btn btn-primary" onclick="reload()">Reload</button>
+                </div>
             </div>
         </div>
     </body>
