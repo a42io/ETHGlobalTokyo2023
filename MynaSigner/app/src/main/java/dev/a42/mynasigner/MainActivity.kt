@@ -35,6 +35,14 @@ class MainActivity : AppCompatActivity(), NfcAdapter.ReaderCallback {
     private lateinit var nfcAdapter: NfcAdapter
     var reader: Reader? = null
 
+    enum class ReaderMode(val rawValue: Int) {
+        MODULUS(1),
+        SIGNATURE(2),
+        DEFAULT(-1)
+    }
+
+    var mode:ReaderMode? = ReaderMode.DEFAULT
+
     // BLE
     lateinit var btManager: BluetoothManager
     lateinit var bleAdvertiser: BluetoothLeAdvertiser
@@ -62,7 +70,6 @@ class MainActivity : AppCompatActivity(), NfcAdapter.ReaderCallback {
         setContentView(R.layout.activity_main)
 
         editTextPIN = findViewById<EditText>(R.id.editTextPIN);
-//        testNFC()
 
         checkPermissions();
     }
@@ -74,6 +81,7 @@ class MainActivity : AppCompatActivity(), NfcAdapter.ReaderCallback {
             ) {
                 Log.d(TAG, "permission has granted")
                 createBlePeripheral()
+                startNFCReader()
             } else {
                 requestPermissionsLauncher.launch(permissions)
             }
@@ -142,7 +150,7 @@ class MainActivity : AppCompatActivity(), NfcAdapter.ReaderCallback {
 
 
 
-    fun testNFC() {
+    fun startNFCReader() {
         nfcAdapter = NfcAdapter.getDefaultAdapter(this.applicationContext)
         nfcAdapter.enableReaderMode(
             this,
@@ -158,19 +166,29 @@ class MainActivity : AppCompatActivity(), NfcAdapter.ReaderCallback {
         reader = Reader(tag)
         reader?.connect()
 
-        readModulus()
-
-        val messageHashString = "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
-        sign(messageHashString.hexToByteArray())
+        if (mode == ReaderMode.MODULUS) {
+            readModulus()
+        } else if (mode == ReaderMode.SIGNATURE) {
+            val messageHashString = "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
+            sign(messageHashString.hexToByteArray())
+        }
     }
 
     fun readModulus() {
+        if (ActivityCompat.checkSelfPermission(
+                this@MainActivity, Manifest.permission.BLUETOOTH_CONNECT
+            )
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
         val jpkiAP = reader?.selectJpkiAp()
         val cert = jpkiAP?.readAuthCertificate()
         val bytes = cert?.publicKey?.encoded!!
         val modulus = bytes.copyOfRange(33, (256+33))
         val modulusStr = "0x${modulus.toHexString().lowercase()}"
         Log.d(TAG, "modulus: $modulusStr")
+        btGattServer.notifyCharacteristicChanged(btCentralDevice, btGattCharacteristic, false, modulus)
     }
 
     fun sign(messageHash: ByteArray) {
@@ -277,6 +295,12 @@ class MainActivity : AppCompatActivity(), NfcAdapter.ReaderCallback {
             btGattServer.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, offset, null)
             if (characteristic == btGattCharacteristic) {
                 Log.d(TAG, value?.toHexString()!!)
+
+                if (value?.size == 1) {
+                    Log.d(TAG, "${value[0].toInt()}")
+                    mode = ReaderMode.values().firstOrNull { it.rawValue == value[0].toInt() }
+                    Log.d(TAG, "${mode?.rawValue}")
+                }
             }
         }
 
