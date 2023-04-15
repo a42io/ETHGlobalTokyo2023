@@ -4,9 +4,13 @@ const LOCAL_STORAGE_KEY_ADDRESS = "LOCAL_STORAGE_KEY_ADDRESS";
 const SERVICE_UUID = '5F155D9E-CBC8-448D-B29B-EA686D158842'.toLowerCase();
 const CHARCTERISTIC_UUID = '1B1D7724-59E0-41CF-BBAE-358999363D32'.toLowerCase();
 
-const NETWORK = 'maticmum'
+const NETWORK = 'matic'
 const INFURA_PROJECT_ID = 'cae98e5c5fbc4d0dae15575b9ab183f8'
 const provider = new ethers.providers.InfuraProvider(NETWORK, INFURA_PROJECT_ID);
+
+const BUNDLER_API_ENDPOINT = ""
+const FACTORY_WALLET_CONTRACT_ADDRESS = ""
+const FACTORY_WALLET_CONTRACT_ABI = []
 
 const mynaSigner = {};
 
