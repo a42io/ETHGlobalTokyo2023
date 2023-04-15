@@ -9,6 +9,13 @@ function toHexString(value) {
 	}).join('').toLowerCase()
 }
 
+function toArrayBuffer(hexString) {
+    return new Uint8Array(hexString.match(/[\da-f]{2}/gi).map(function (h) {
+		return parseInt(h, 16)
+	})).buffer;
+}
+
+// call from button
 async function connectMynaSigner() {
 	mynaSigner.device = await navigator.bluetooth.requestDevice({
 		filters: [{
@@ -27,21 +34,37 @@ async function connectMynaSigner() {
 		onCharacteristicValueChanged
 	)
 
-	mynaSigner.characteristic.startNotifications()
+	mynaSigner.characteristic.startNotifications();
+	onMynaSignerConnect()
+}
 
-	// set modulus mode
-	await mynaSigner.characteristic.writeValueWithResponse(new Uint8Array([1]))
-	console.log("connected to mynaSigner")
+// call from button
+async function loadMynaWallet() {
+	requestModulusMode();
+}
+
+async function signTest() {
+	const messageToSign = toArrayBuffer("68656c6c6f");	// hello
+	await mynaSigner.characteristic.writeValueWithResponse(messageToSign);
+	requestSignatureMode();
+}
+
+function onMynaSignerConnect() {
+	console.log("connected to mynaSigner");
+}
+
+async function requestModulusMode() {
+	await mynaSigner.characteristic.writeValueWithResponse(new Uint8Array([1]));
+}
+
+async function requestSignatureMode() {
+	await mynaSigner.characteristic.writeValueWithResponse(new Uint8Array([2]));
 }
 
 function onCharacteristicValueChanged (event) {
-	console.log("BLE onCharacteristicValueChanged")
+	console.log("BLE onCharacteristicValueChanged");
 	const value = event.target.value;
-	console.log(toHexString(value))
-}
-
-function loadMynaWallet() {
-
+	console.log(toHexString(value));
 }
 
 $(window).on('load', async () => {

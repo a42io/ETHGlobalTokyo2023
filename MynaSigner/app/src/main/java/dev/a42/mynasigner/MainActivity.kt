@@ -35,6 +35,8 @@ class MainActivity : AppCompatActivity(), NfcAdapter.ReaderCallback {
     private lateinit var nfcAdapter: NfcAdapter
     var reader: Reader? = null
 
+    var messageToSign: ByteArray? = null
+
     enum class ReaderMode(val rawValue: Int) {
         MODULUS(1),
         SIGNATURE(2),
@@ -169,8 +171,7 @@ class MainActivity : AppCompatActivity(), NfcAdapter.ReaderCallback {
         if (mode == ReaderMode.MODULUS) {
             readModulus()
         } else if (mode == ReaderMode.SIGNATURE) {
-            val messageHashString = "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
-            sign(messageHashString.hexToByteArray())
+            messageToSign?.let { sign(it) }
         }
     }
 
@@ -184,14 +185,23 @@ class MainActivity : AppCompatActivity(), NfcAdapter.ReaderCallback {
         }
         val jpkiAP = reader?.selectJpkiAp()
         val cert = jpkiAP?.readAuthCertificate()
-        val bytes = cert?.publicKey?.encoded!!
-        val modulus = bytes.copyOfRange(33, (256+33))
-        val modulusStr = "0x${modulus.toHexString().lowercase()}"
+        val bytes = cert?.publicKey?.encoded
+        val modulus = bytes?.copyOfRange(33, (256+33))
+        val modulusStr = "0x${modulus?.toHexString()?.lowercase()}"
         Log.d(TAG, "modulus: $modulusStr")
-        btGattServer.notifyCharacteristicChanged(btCentralDevice, btGattCharacteristic, false, modulus)
+        if (modulus != null) {
+            btGattServer.notifyCharacteristicChanged(btCentralDevice, btGattCharacteristic, false, modulus)
+        }
     }
 
     fun sign(messageHash: ByteArray) {
+        if (ActivityCompat.checkSelfPermission(
+                this@MainActivity, Manifest.permission.BLUETOOTH_CONNECT
+            )
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
         val pin = editTextPIN.text.toString()
 
         if (pin.length != 4) return
@@ -214,6 +224,9 @@ class MainActivity : AppCompatActivity(), NfcAdapter.ReaderCallback {
         val signature = jpkiAP?.authSignature(digestInfo)
         val signatureStr = "0x${signature?.toHexString()?.lowercase()}"
         Log.d(TAG, "signature: $signatureStr")
+        if (signature != null) {
+            btGattServer.notifyCharacteristicChanged(btCentralDevice, btGattCharacteristic, false, signature)
+        }
     }
 
     private val bleAdvertiseCallback = object: AdvertiseCallback() {
@@ -300,6 +313,8 @@ class MainActivity : AppCompatActivity(), NfcAdapter.ReaderCallback {
                     Log.d(TAG, "${value[0].toInt()}")
                     mode = ReaderMode.values().firstOrNull { it.rawValue == value[0].toInt() }
                     Log.d(TAG, "${mode?.rawValue}")
+                } else {
+                    messageToSign = value
                 }
             }
         }
