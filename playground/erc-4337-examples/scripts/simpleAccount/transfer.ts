@@ -11,6 +11,7 @@ import config from "../../config.json";
 
 export default async function main(t: string, amt: string, withPM: boolean) {
   const provider = new ethers.providers.JsonRpcProvider(config.rpcUrl);
+
   const paymasterAPI = withPM
     ? getVerifyingPaymaster(config.paymasterUrl, config.entryPoint)
     : undefined;
@@ -24,12 +25,14 @@ export default async function main(t: string, amt: string, withPM: boolean) {
 
   const target = ethers.utils.getAddress(t);
   const value = ethers.utils.parseEther(amt);
-  const op = await accountAPI.createSignedUserOp({
+
+  const va = {
     target,
     value,
     data: "0x",
     ...(await getGasFee(provider)),
-  });
+  };
+  const op = await accountAPI.createSignedUserOp(va);
   console.log(`Signed UserOperation: ${await printOp(op)}`);
 
   const client = await getHttpRpcClient(
