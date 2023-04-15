@@ -10,7 +10,7 @@ const EXPONENT =
   "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010001";
 
 const FACTORY_ABI = [
-  "function getAccountAddress(address,bytes,bytes,bytes32) view returns (address)",
+  "function getAddr(address,bytes,bytes,uint256) view returns (address)",
   "function createAccount(address,bytes,bytes,bytes32) returns (address)",
 ];
 
@@ -63,7 +63,7 @@ app.get("/ca", async (req, res) => {
   // 42
   const salt = ethers.keccak256(ethers.hexlify("0x2a"));
 
-  const ca = await factoryContract.getAccountAddress(
+  const ca = await factoryContract.getAddr(
     ENTRY_POINT,
     modulus,
     EXPONENT,
