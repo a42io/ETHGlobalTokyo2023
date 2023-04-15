@@ -8,7 +8,7 @@ const NETWORK = 'matic'
 const INFURA_PROJECT_ID = 'cae98e5c5fbc4d0dae15575b9ab183f8'
 const provider = new ethers.providers.InfuraProvider(NETWORK, INFURA_PROJECT_ID);
 
-const BUNDLER_API_ENDPOINT = ""
+const BUNDLER_API_ENDPOINT = "https://eth-global-tokyo-api-cqskedmg6a-uw.a.run.app/"
 const FACTORY_WALLET_CONTRACT_ADDRESS = ""
 const FACTORY_WALLET_CONTRACT_ABI = []
 
@@ -159,20 +159,29 @@ function onCharacteristicValueChanged (event) {
 
 function updateAddress(address) {
 	$('#address').text(address);
+	updateBalance(address)
 }
 
-function updateBalance() {
-	$('#balance').text();
+async function updateBalance() {
+	const address = localStorage.getItem(LOCAL_STORAGE_KEY_ADDRESS)
+	const url = `${BUNDLER_API_ENDPOINT}/balance?ca=${address}`
+	const res = await axios.get(url)
+	$('#balance').text(ethers.utils.formatEther(res.data.balance));
 }
 
 async function loadAddress() {
 	const address = localStorage.getItem(LOCAL_STORAGE_KEY_ADDRESS)
-	if (address) {
+	console.log(address)
+	if (!address || address === "undefined") {
+		const modulus = localStorage.getItem(LOCAL_STORAGE_KEY_MODULUS)
+		console.log(modulus)
+		const url = `${BUNDLER_API_ENDPOINT}/ca?modulus=0x${modulus}`
+		const res = await axios.get(url)
+		const address = localStorage.setItem(LOCAL_STORAGE_KEY_ADDRESS, res.data.ca)
 		updateAddress(address)
 	} else {
-
+		updateAddress(address)
 	}
-
 }
 
 $(window).on('load', async () => {
