@@ -13,6 +13,7 @@ import android.nfc.Tag
 import android.os.Bundle
 import android.os.ParcelUuid
 import android.util.Log
+import android.view.WindowManager
 import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.result.ActivityResultCallback
@@ -70,6 +71,8 @@ class MainActivity : AppCompatActivity(), NfcAdapter.ReaderCallback {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         editTextPIN = findViewById<EditText>(R.id.editTextPIN);
 
