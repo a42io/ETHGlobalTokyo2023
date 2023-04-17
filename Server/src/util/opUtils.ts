@@ -7,7 +7,11 @@ export function toJSON(op: Partial<UserOperationStruct>): Promise<any> {
       .map((key) => {
         let val = (userOp as any)[key];
         if (typeof val !== "string" || !val.startsWith("0x")) {
-          val = ethers.utils.hexValue(val);
+          if (key === "signature" && val === "") {
+            val = "";
+          } else {
+            val = ethers.utils.hexValue(val);
+          }
         }
         return [key, val];
       })
@@ -21,8 +25,7 @@ export function toJSON(op: Partial<UserOperationStruct>): Promise<any> {
   );
 }
 
-export async function printOp(
-  op: Partial<UserOperationStruct>
-): Promise<string> {
-  return toJSON(op).then((userOp) => JSON.stringify(userOp, null, 2));
+export async function printOp(op: Partial<UserOperationStruct>): Promise<any> {
+  // return toJSON(op).then((userOp) => JSON.stringify(userOp, null, 2));
+  return toJSON(op).then((userOp) => userOp);
 }

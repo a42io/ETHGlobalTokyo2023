@@ -9,11 +9,11 @@ import {
   getSimpleAccount,
   getGasFee,
   printOp,
-  // getHttpRpcClient,
+  getHttpRpcClient,
 } from "./util";
 
-// const BUNDLER_URL =
-process.env.BUNDLER ||
+const BUNDLER_URL =
+  process.env.BUNDLER ||
   "https://node.stackup.sh/v1/rpc/38e06004797c105d144d11e68f406f10dae0dee82faf6304920d3afeccc002e0";
 
 const ACOUNT_ABI = ["function nonce() view returns (uint256)"];
@@ -45,6 +45,16 @@ const factoryContract = new ethers.Contract(
   provider
 );
 
+const wallet = new ethers.Wallet(process.env.PRIVATE_KEY!, provider);
+
+const accountAPI = getSimpleAccount(
+  provider,
+  wallet.privateKey,
+  ENTRY_POINT,
+  process.env.FACTORY_CONTRACT_ADDRESS!,
+  undefined
+);
+
 function getSalt() {
   return ethers.BigNumber.from(ethers.utils.formatBytes32String("a42"));
 }
@@ -52,7 +62,6 @@ function getSalt() {
 async function getAccountAddress(modulus: string): Promise<string> {
   const a42 = getSalt();
   const wa = await factoryContract.getAddress(modulus, a42);
-  console.log("wallet address: ", wa);
   return wa as string;
 }
 
@@ -152,20 +161,10 @@ app.get("/balance", async (req, res) => {
   }
 });
 
-app.get("/uo", async (req, res) => {
+app.post("/uo", async (req, res) => {
   // t 0x...
   // amt 0.001
   const { t, amt, modulus } = req.query;
-
-  const wallet = new ethers.Wallet(process.env.PRIVATE_KEY!, provider);
-
-  const accountAPI = getSimpleAccount(
-    provider,
-    wallet.privateKey,
-    ENTRY_POINT,
-    process.env.FACTORY_CONTRACT_ADDRESS!,
-    undefined
-  );
 
   const target = ethers.utils.getAddress(t as string);
   const value = ethers.utils.parseEther(amt as string);
@@ -187,71 +186,59 @@ app.get("/uo", async (req, res) => {
 
   const nonce = await getNonce(modulus as string);
 
+  // TODO
   const verificationGasLimit = ethers.BigNumber.from("0xF4240");
 
   const partialUserOp = {
     sender,
-    nonce: ethers.BigNumber.from(nonce),
+    nonce,
     initCode,
     callData,
     callGasLimit,
     verificationGasLimit,
-    preVerificationGas: ethers.BigNumber.from("0x00"),
     maxFeePerGas: feeData.maxFeePerGas,
     maxPriorityFeePerGas: feeData.maxPriorityFeePerGas,
     paymasterAndData: "0x",
-    signature: "0x00",
   };
 
-  const preVerificationGas = await accountAPI.getPreVerificationGas(
-    partialUserOp as any
-  );
+  // const preVerificationGas = await accountAPI.getPreVerificationGas(
+  //   partialUserOp as any
+  // );
 
-  const without = {
-    callData,
-    callGasLimit,
-    sender,
-    initCode,
-    nonce,
-    verificationGasLimit,
-    maxFeePerGas: feeData.maxFeePerGas!,
-    maxPriorityFeePerGas: feeData.maxFeePerGas!,
+  // TODO
+  const preVerificationGas = 100000;
+
+  const unsignedUserOps = {
+    ...partialUserOp,
     preVerificationGas,
+    signature: "",
   };
-
-  const hoges = {
-    ...particial,
-    ...without,
-    paymasterAndData: "0x",
-  };
-
-  console.log("------");
-  console.log(hoges);
 
   const chainId = await provider.getNetwork().then((net) => net.chainId);
-
-  const uo2 = {
-    sender,
-    nonce,
-    initCode,
-    callData,
-    callGasLimit,
-    verificationGasLimit,
-    maxFeePerGas: feeData.maxFeePerGas!,
-    maxPriorityFeePerGas: feeData.maxFeePerGas!,
-    paymasterAndData: "0x",
-    preVerificationGas,
-  };
-
-  const prop = await ethers.utils.resolveProperties(uo2);
-
+  const prop = await ethers.utils.resolveProperties(unsignedUserOps);
+  console.log(prop);
   const userOpHash = await getUserOpHash(prop as any, ENTRY_POINT, chainId);
 
   console.log(userOpHash);
 
-  const printedOp = await printOp(uo2 as any);
+  const printedOp = await printOp(unsignedUserOps as any);
 
   return res.json({ userOpHash, uop: printedOp });
+});
+
+app.post("/transfer", async (req, res) => {
+  const { uo } = req.body;
+
+  const client = await getHttpRpcClient(provider, BUNDLER_URL, ENTRY_POINT);
+
+  const uoHash = await client.sendUserOpToBundler(uo as any);
+  console.log(`UserOpHash: ${uoHash}`);
+
+  console.log("Waiting for transaction...");
+  const txHash = await accountAPI.getUserOpReceipt(uoHash);
+  console.log(`Transaction hash: ${txHash}`);
+
+  return res.json({ txHash, uoHash });
 });
 
 export default app;
