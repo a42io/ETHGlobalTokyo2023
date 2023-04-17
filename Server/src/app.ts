@@ -12,9 +12,7 @@ import {
   getHttpRpcClient,
 } from "./util";
 
-const BUNDLER_URL =
-  process.env.BUNDLER ||
-  "https://node.stackup.sh/v1/rpc/38e06004797c105d144d11e68f406f10dae0dee82faf6304920d3afeccc002e0";
+const BUNDLER_URL = process.env.BUNDLER!;
 
 const ACOUNT_ABI = ["function nonce() view returns (uint256)"];
 
@@ -22,9 +20,6 @@ const FACTORY_ABI = [
   "function getAddress(bytes, uint256) view returns (address)",
 ];
 const ENTRY_POINT = "0x0576a174D229E3cFA37253523E645A78A0C91B57";
-
-// const EXPONENT =
-("0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010001");
 
 const WALLET_ABI = ["function nonce() view returns (uint256)"];
 
@@ -119,7 +114,7 @@ app.get("/ca", async (req, res) => {
   }
 
   // 42
-  const salt = ethers.BigNumber.from(ethers.utils.formatBytes32String("a42"));
+  const salt = getSalt();
 
   const ca = await factoryContract.getAddress(modulus, salt);
 
