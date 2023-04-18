@@ -4,24 +4,16 @@ import * as dotenv from "dotenv";
 import { ethers } from "ethers";
 import { getUserOpHash } from "@account-abstraction/utils";
 
-import {
-  // getVerifyingPaymaster,
-  getSimpleAccount,
-  getGasFee,
-  printOp,
-  getHttpRpcClient,
-} from "./util";
+import { getSimpleAccount, getGasFee, printOp, getHttpRpcClient } from "./util";
 
-const BUNDLER_URL = process.env.BUNDLER!;
+const BUNDLER_URL = process.env.BUNDLER_URL!;
 
-const ACOUNT_ABI = ["function nonce() view returns (uint256)"];
+const ACCOUNT_ABI = ["function nonce() view returns (uint256)"];
 
 const FACTORY_ABI = [
   "function getAddress(bytes, uint256) view returns (address)",
 ];
 const ENTRY_POINT = "0x0576a174D229E3cFA37253523E645A78A0C91B57";
-
-const WALLET_ABI = ["function nonce() view returns (uint256)"];
 
 if (process.env.NODE_ENV !== "production") {
   dotenv.config();
@@ -84,7 +76,7 @@ async function getNonce(modulus: string): Promise<string> {
   const isDeployed = code !== "0x";
 
   if (isDeployed) {
-    const w = new ethers.Contract(address, ACOUNT_ABI, provider);
+    const w = new ethers.Contract(address, ACCOUNT_ABI, provider);
     const nonce = await w.nonce();
     return nonce;
   } else {
@@ -132,7 +124,7 @@ app.get("/nonce", async (req, res) => {
   }
 
   try {
-    const contract = new ethers.Contract(ca as string, WALLET_ABI, provider);
+    const contract = new ethers.Contract(ca as string, ACCOUNT_ABI, provider);
     const nonce = await contract.nonce();
     return res.json({ nonce: nonce.toString() });
   } catch (e) {
@@ -156,7 +148,7 @@ app.get("/balance", async (req, res) => {
   }
 });
 
-app.post("/uo", async (req, res) => {
+app.get("/uo", async (req, res) => {
   // t 0x...
   // amt 0.001
   const { t, amt, modulus } = req.query;
@@ -211,29 +203,30 @@ app.post("/uo", async (req, res) => {
 
   const chainId = await provider.getNetwork().then((net) => net.chainId);
   const prop = await ethers.utils.resolveProperties(unsignedUserOps);
-  console.log(prop);
   const userOpHash = await getUserOpHash(prop as any, ENTRY_POINT, chainId);
-
-  console.log(userOpHash);
-
+  const sha256UserOpHash = ethers.utils.sha256(userOpHash);
   const printedOp = await printOp(unsignedUserOps as any);
+  const response = { userOpHash: sha256UserOpHash, uop: printedOp };
 
-  return res.json({ userOpHash, uop: printedOp });
+  return res.json(response);
 });
 
 app.post("/transfer", async (req, res) => {
-  const { uo } = req.body;
+  const uo = req.body;
 
   const client = await getHttpRpcClient(provider, BUNDLER_URL, ENTRY_POINT);
 
-  const uoHash = await client.sendUserOpToBundler(uo as any);
-  console.log(`UserOpHash: ${uoHash}`);
-
-  console.log("Waiting for transaction...");
-  const txHash = await accountAPI.getUserOpReceipt(uoHash);
-  console.log(`Transaction hash: ${txHash}`);
-
-  return res.json({ txHash, uoHash });
+  try {
+    const uoHash = await client.sendUserOpToBundler(uo as any);
+    console.log(`UserOpHash: ${uoHash}`);
+    console.log("Waiting for transaction...");
+    const txHash = await accountAPI.getUserOpReceipt(uoHash);
+    console.log(`Transaction hash: ${txHash}`);
+    return res.json({ txHash, uoHash });
+  } catch (e) {
+    console.log(e);
+    return res.status(400).send(e);
+  }
 });
 
 export default app;
