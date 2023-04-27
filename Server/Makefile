@@ -20,7 +20,9 @@ push:
 deploy:
 	gcloud run deploy eth-global-tokyo-api --image gcr.io/playground-hiro/ethglobaltokyo --platform managed --region us-west1 \
    	--update-env-vars FACTORY_CONTRACT_ADDRESS=0x59106245A23aD76a593882C35773C999B3aFbf1C \
+	--update-env-vars BUNDLER_URL=https://node.stackup.sh/v1/rpc/2edc2f2f9ab90fdd2074e9a6f839edf19214988a8f1ed0c54db478f5066bdc11 \
 	--update-env-vars CHAIN_ID=matic,NODE_ENV=production,NFT_CONTRACT_ADDRESS=0xb172aed64b804325d52e4bbb4d24559b12cb433b \
+	--update-env-vars preVerificationGas=70000,verificationGasLimit=500000 \
 	--update-secrets GOERLI_ALCHEMY_API_KEY=GOERLI_ALCHEMY_API_KEY:latest,PRIVATE_KEY=PRIVATE_KEY:latest \
 	--update-secrets MATIC_ALCHEMY_API_KEY=MATIC_ALCHEMY_API_KEY:latest
 
