@@ -174,7 +174,11 @@ app.get("/uo", async (req, res) => {
   const nonce = await getNonce(modulus as string);
 
   // TODO
-  const verificationGasLimit = ethers.BigNumber.from("0xF4240");
+  const verificationGasLimit = ethers.BigNumber.from(
+    process.env.verificationGasLimit
+  );
+
+  console.log(verificationGasLimit.toHexString());
 
   const partialUserOp = {
     sender,
@@ -193,7 +197,11 @@ app.get("/uo", async (req, res) => {
   // );
 
   // TODO
-  const preVerificationGas = 100000;
+  const preVerificationGas = ethers.BigNumber.from(
+    process.env.preVerificationGas
+  );
+
+  console.log(preVerificationGas.toHexString());
 
   const unsignedUserOps = {
     ...partialUserOp,
